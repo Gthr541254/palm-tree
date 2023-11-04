@@ -1,6 +1,6 @@
 import fastapi
-from pydantic import BaseModel
-from typing import Annotated, Union, Literal
+from pydantic import BaseModel, ValidationError
+from typing import Annotated, Union, Literal, List
 
 from challenge.model import DelayModel
 
@@ -13,7 +13,7 @@ class Predict(BaseModel):
     TIPOVUELO: Literal['N', 'I']
     MES: Annotated[int, fastapi.Body(gt=0,lt=13)]
 
-@api.exception_handler(ValidationError)
+@app.exception_handler(ValidationError)
 async def validation_exception_handler(request, exc: ValidationError):
     return JSONResponse(status_code=400, content={"error": "Parameter validation error"})
 

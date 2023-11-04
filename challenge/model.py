@@ -79,7 +79,7 @@ class DelayModel:
         }
     
     def pickle_train(self) -> None:
-        data = pd.read_csv(filepath_or_buffer="../data/data.csv". dtype=self._dtype)
+        data = pd.read_csv(filepath_or_buffer="../data/data.csv", dtype=self._dtype)
         features, target = self.preprocess(data, 'delay')
         self.fit(features, target)
         
@@ -90,14 +90,14 @@ class DelayModel:
     
     def pickle_load(self) -> None:
         import pickle
-        with open("model.pkl", "rb") as f:
+        with open("challenge/model.pkl", "rb") as f:
             self._model = pickle.load(f)
 
     def preprocess(
         self,
         data: pd.DataFrame,
         target_column: str = None
-    ) -> Union(Tuple[pd.DataFrame, pd.DataFrame], pd.DataFrame):
+    ) -> Union[Tuple[pd.DataFrame, pd.DataFrame], pd.DataFrame]:
         """
         Prepare raw data for training or predict.
 
