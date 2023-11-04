@@ -57,6 +57,7 @@ class DelayModel:
         self
     ):
         self._model = None # Model should be saved in this attribute.
+        self._scale = None
         self._dtype = {
             'Fecha-I': str, #Scheduled date and time of the flight
             'Vlo-I': str, #Scheduled flight number, int but can have string value
@@ -79,19 +80,20 @@ class DelayModel:
         }
     
     def pickle_train(self) -> None:
-        data = pd.read_csv(filepath_or_buffer="../data/data.csv", dtype=self._dtype)
+        data = pd.read_csv(filepath_or_buffer="data/data.csv", dtype=self._dtype)
         features, target = self.preprocess(data, 'delay')
         self.fit(features, target)
         
         import pickle
         # save the model to a file
-        with open("model.pkl", "wb") as f:
+        with open("challenge/model.pkl", "wb") as f:
             pickle.dump(self._model, f)
     
     def pickle_load(self) -> None:
         import pickle
         with open("challenge/model.pkl", "rb") as f:
             self._model = pickle.load(f)
+        self._scale = 55592 / 12614
 
     def preprocess(
         self,
@@ -144,10 +146,13 @@ class DelayModel:
                 threshold_in_minutes = 15
                 data[target_column] = np.where(data['min_diff'] > threshold_in_minutes, 1, 0)
             
-            target = data[target_column] # delay
-            return features[top_10_features], target
+            target = data[[target_column]] # delay
+            target_counts = target[target_column].value_counts()
+            self._scale =  target_counts[0] / target_counts[1]
+            #return features[top_10_features], target
+            return features.T.reindex(top_10_features).T.fillna(0), target
         
-        return features[top_10_features]
+        return features.T.reindex(top_10_features).T.fillna(0)
 
     def fit(
         self,
@@ -162,7 +167,7 @@ class DelayModel:
             target (pd.DataFrame): target.
         """
         import xgboost as xgb
-        self._model = xgb.XGBClassifier(random_state=1, learning_rate=0.01, scale_pos_weight = scale)
+        self._model = xgb.XGBClassifier(random_state=1, learning_rate=0.01, scale_pos_weight = self._scale)
         self._model.fit(features, target)
         return
 
@@ -179,5 +184,9 @@ class DelayModel:
         Returns:
             (List[int]): predicted targets.
         """
+        if self._model is None:
+            self.pickle_load()
+        
         y_preds = self._model.predict(features)
         return [1 if y_pred > 0.5 else 0 for y_pred in y_preds]
+
