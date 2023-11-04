@@ -25,3 +25,9 @@ jobs:
 
     - name: Test api.py
       run: make api-test
+
+    - name: Launch server
+      run: uvicorn challenge:app --host 0.0.0.0 --port 8000 &
+      
+    - name: Server Stress Test
+      run: make stress-test
