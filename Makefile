@@ -23,12 +23,19 @@ install:		## Install dependencies
 	pip install -r requirements-test.txt
 	pip install -r requirements.txt
 
-STRESS_URL = http://127.0.0.1:8000 
-.PHONY: stress-test
+STRESS_URL = http://127.0.0.1:8000
+.PHONY: stress-test-prod
 stress-test:
 	# change stress url to your deployed app 
 	mkdir reports || true
 	locust -f tests/stress/api_stress.py --print-stats --html reports/stress-test.html --run-time 60s --headless --users 100 --spawn-rate 1 -H $(STRESS_URL)
+
+STRESS_URL1 = http://127.0.0.1:8001
+.PHONY: stress-test
+stress-test:
+	# change stress url to your deployed app 
+	mkdir reports || true
+	locust -f tests/stress/api_stress.py --print-stats --html reports/stress-test.html --run-time 60s --headless --users 100 --spawn-rate 1 -H $(STRESS_URL1)
 
 .PHONY: model-test
 model-test:			## Run tests and coverage
@@ -43,3 +50,7 @@ api-test:			## Run tests and coverage
 .PHONY: build
 build:			## Build locally the python artifact
 	python setup.py bdist_wheel
+	
+.PHONY: build-compressed
+build:			## Build locally a compressed file artifact
+	zip 
