@@ -50,7 +50,3 @@ api-test:			## Run tests and coverage
 .PHONY: build
 build:			## Build locally the python artifact
 	python setup.py bdist_wheel
-	
-.PHONY: build-compressed
-build:			## Build locally a compressed file artifact
-	zip 

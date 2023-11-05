@@ -1,0 +1,29 @@
+name: PR Test
+
+on:
+  [workflow_call]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install dependencies
+      run: make venv
+
+    - name: Install dependencies 2
+      run: make install
+
+    - name: Test model.py
+      run: make model-test
+
+    - name: Test api.py
+      run: make api-test
+
+    - name: Launch server
+      run: uvicorn challenge:app --host 0.0.0.0 --port 8001 &
+      
+    - name: Server Stress Test
+      run: make stress-test

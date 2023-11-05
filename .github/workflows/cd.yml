@@ -1,0 +1,20 @@
+name: Continuous Delivery
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    uses: ./.github/workflows/pr-test.yml
+  
+  deploy:
+    needs: test
+    
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Notify delivery and deployment
+      env:
+        HOOK: ${{ secrets.HOOK }}
+      run: curl -X GET $HOOK
