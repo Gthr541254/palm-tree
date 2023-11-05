@@ -62,7 +62,25 @@ pipeline {
                 // sh label: 'Manual', script: 'sudo apt install zip unzip'
                 sh label: 'Remove dev files', script: 'find . | grep -E "(/__pycache__$|\\.pyc$|\\.pyo$)" | xargs rm -rf'
                 sh label: 'Remove previous artifact', script: 'rm -rf palmtree.zip'
+                
+                dir(workspace + '/.venv/bin') {
+                    sh label: 'Redirect venv', script: """
+                        old_path='${WORKSPACE}/.venv'
+                        new_path='${targetPath}/.venv'
+                        sed -i \"s|\$old_path|\$new_path|g\" *
+                    """
+                }
+                
                 sh label: 'Package artifact', script: 'zip --symlinks -r1 palmtree.zip challenge/model.py challenge/api.py challenge/model.pkl challenge/__init__.py .venv'
+                
+                dir(workspace + '/.venv/bin') {
+                    sh label: 'Restore venv', script: """
+                        old_path='${targetPath}/.venv'
+                        new_path='${WORKSPACE}/.venv'
+                        sed -i \"s|\$old_path|\$new_path|g\" *
+                    """
+                }
+                
                 // tag artifact with BUILD_NUMBER and submit artifact to permanent storage?
             }
         }
@@ -73,15 +91,6 @@ pipeline {
                 dir(targetPath) {
                     sh label: 'Clean', script: 'rm -rf ../palm-tree/*'
                     sh label: 'Install artifact', script: "unzip -o ${WORKSPACE}/palmtree.zip"
-                }
-                dir(targetPath + '/.venv/bin') {
-                    sh label: 'Redirect', script: """
-                        old_path='${WORKSPACE}/.venv'
-                        new_path='${targetPath}/.venv'
-                        sed -i \"s|\$old_path|\$new_path|g\" *
-                    """
-                }
-                dir(targetPath) {
                     withEnv(['JENKINS_NODE_COOKIE=do_not_kill']) {
                         sh label: 'Run production server', script: '''
                             source .venv/bin/activate
