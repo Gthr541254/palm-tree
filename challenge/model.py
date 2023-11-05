@@ -188,5 +188,5 @@ class DelayModel:
             self.pickle_load()
         
         y_preds = self._model.predict(features)
-        return [1 if y_pred > 0.5 else 0 for y_pred in y_preds]
+        return [0 if y_pred > 0.5 else 1 for y_pred in y_preds]
 
