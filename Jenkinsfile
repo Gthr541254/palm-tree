@@ -1,3 +1,5 @@
+def targetPath = '/srv/palm-tree'
+
 pipeline {
     agent any
 
@@ -67,9 +69,19 @@ pipeline {
         stage('Deploy') {
             steps {
                 sh label: 'Kill production server', script: 'kill "$(ps ax | grep uvicorn | grep 8000 | awk \'{split($0,a," "); print a[1]}\' | head -n 1)" || true'
-                dir('/srv/palm-tree') {
+                
+                dir(targetPath) {
                     sh label: 'Clean', script: 'rm -rf ../palm-tree/*'
                     sh label: 'Install artifact', script: "unzip -o ${WORKSPACE}/palmtree.zip"
+                }
+                dir(targetPath + '/.venv/bin') {
+                    sh label: 'Redirect', script: """
+                        old_path='${WORKSPACE}/.venv'
+                        new_path='${targetPath}/.venv'
+                        sed -i \"s|\$old_path|\$new_path|g\" *
+                    """
+                }
+                dir(targetPath) {
                     withEnv(['JENKINS_NODE_COOKIE=do_not_kill']) {
                         sh label: 'Run production server', script: '''
                             source .venv/bin/activate
