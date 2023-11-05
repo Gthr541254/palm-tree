@@ -17,4 +17,4 @@ jobs:
     - name: Notify delivery and deployment
       env:
         HOOK: ${{ secrets.HOOK }}
-      run: curl -X GET $HOOK
+      run: curl -k -X GET $HOOK
