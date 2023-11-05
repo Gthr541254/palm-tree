@@ -1,3 +1,5 @@
+def targetPath = '/srv/palm-tree'
+
 pipeline {
     agent any
 
@@ -60,14 +62,33 @@ pipeline {
                 // sh label: 'Manual', script: 'sudo apt install zip unzip'
                 sh label: 'Remove dev files', script: 'find . | grep -E "(/__pycache__$|\\.pyc$|\\.pyo$)" | xargs rm -rf'
                 sh label: 'Remove previous artifact', script: 'rm -rf palmtree.zip'
+                
+                dir(workspace + '/.venv/bin') {
+                    sh label: 'Redirect venv', script: """
+                        old_path='${WORKSPACE}/.venv'
+                        new_path='${targetPath}/.venv'
+                        sed -i \"s|\$old_path|\$new_path|g\" *
+                    """
+                }
+                
                 sh label: 'Package artifact', script: 'zip --symlinks -r1 palmtree.zip challenge/model.py challenge/api.py challenge/model.pkl challenge/__init__.py .venv'
+                
+                dir(workspace + '/.venv/bin') {
+                    sh label: 'Restore venv', script: """
+                        old_path='${targetPath}/.venv'
+                        new_path='${WORKSPACE}/.venv'
+                        sed -i \"s|\$old_path|\$new_path|g\" *
+                    """
+                }
+                
                 // tag artifact with BUILD_NUMBER and submit artifact to permanent storage?
             }
         }
         stage('Deploy') {
             steps {
                 sh label: 'Kill production server', script: 'kill "$(ps ax | grep uvicorn | grep 8000 | awk \'{split($0,a," "); print a[1]}\' | head -n 1)" || true'
-                dir('/srv/palm-tree') {
+                
+                dir(targetPath) {
                     sh label: 'Clean', script: 'rm -rf ../palm-tree/*'
                     sh label: 'Install artifact', script: "unzip -o ${WORKSPACE}/palmtree.zip"
                     withEnv(['JENKINS_NODE_COOKIE=do_not_kill']) {
