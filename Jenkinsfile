@@ -86,5 +86,10 @@ pipeline {
                 '''
             }
         }
+        stage('Recover Space') {
+            steps {
+                cleanWs()
+            }
+        }
     }
 }
