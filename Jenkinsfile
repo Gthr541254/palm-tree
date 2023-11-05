@@ -81,6 +81,7 @@ pipeline {
                 // post deploy testing, could also send an email
                 sh label: 'Run make stress-test', script: '''
                     source .venv/bin/activate
+                    pip install -r requirements-test.txt
                     make stress-test-prod
                 '''
             }
